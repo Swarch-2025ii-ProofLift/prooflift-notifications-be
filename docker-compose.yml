@@ -1,0 +1,44 @@
+services:
+  prooflift-notifications-db:
+    image: postgres:16-alpine
+    container_name: prooflift-notifications-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  prooflift-notifications-mq:
+    image: rabbitmq:3-management-alpine
+    container_name: prooflift-notifications-mq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${MQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  prooflift-notifications-be:
+    build: .
+    container_name: prooflift-notifications-be
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      prooflift-notifications-db:
+        condition: service_healthy
+      prooflift-notifications-mq:
+        condition: service_healthy
+    restart: unless-stopped
