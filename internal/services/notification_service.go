@@ -86,3 +86,30 @@ func (s *NotificationService) CreateCommentNotification(ctx context.Context, rec
 func (s *NotificationService) CreateReactionNotification(ctx context.Context, recipientID, actorID, postID uuid.UUID, message string) (*models.Notification, error) {
 	return s.CreateNotification(ctx, recipientID, actorID, postID, nil, models.NotificationReactionAdded, message)
 }
+
+func (s *NotificationService) DeleteCommentNotification(ctx context.Context, commentID uuid.UUID) (int64, error) {
+	if commentID == uuid.Nil {
+		return 0, configs.NewValidationError("commentID cannot be nil")
+	}
+
+	count, err := s.repo.DeleteCommentNotification(ctx, commentID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete notifications by comment_id: %w", err)
+	}
+	return count, nil
+}
+
+func (s *NotificationService) DeleteReactionNotifications(ctx context.Context, postID uuid.UUID, actorID uuid.UUID) (int64, error) {
+	if postID == uuid.Nil {
+		return 0, configs.NewValidationError("postID cannot be nil")
+	}
+	if actorID == uuid.Nil {
+		return 0, configs.NewValidationError("actorID cannot be nil")
+	}
+
+	count, err := s.repo.DeleteReactionNotification(ctx, postID, actorID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete reaction notifications: %w", err)
+	}
+	return count, nil
+}
