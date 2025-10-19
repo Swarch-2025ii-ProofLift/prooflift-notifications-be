@@ -9,8 +9,10 @@ import (
 type EventType string
 
 const (
-	EventCommentCreated EventType = "COMMENT_CREATED"
-	EventReactionAdded  EventType = "REACTION_ADDED"
+	EventCommentCreated  EventType = "COMMENT_CREATED"
+	EventCommentDeleted  EventType = "COMMENT_DELETED"
+	EventReactionAdded   EventType = "REACTION_ADDED"
+	EventReactionRemoved EventType = "REACTION_REMOVED"
 )
 
 type Event struct {
@@ -60,17 +62,12 @@ func (e *Event) ParseIDs() (userID uuid.UUID, actorID uuid.UUID, postID uuid.UUI
 		commentID = &parsedCommentID
 	}
 
-	if e.Type == EventCommentCreated && commentID == nil {
-		err = fmt.Errorf("comment_id is required for COMMENT_CREATED events")
-		return
-	}
-
 	return
 }
 
 func (e *Event) IsValidType() bool {
 	switch e.Type {
-	case EventCommentCreated, EventReactionAdded:
+	case EventCommentCreated, EventCommentDeleted, EventReactionAdded, EventReactionRemoved:
 		return true
 	default:
 		return false

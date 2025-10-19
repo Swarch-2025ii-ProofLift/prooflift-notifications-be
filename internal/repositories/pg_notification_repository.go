@@ -139,3 +139,27 @@ func (r *PGNotificationRepository) MarkAsRead(ctx context.Context, notificationI
 	}
 	return nil
 }
+
+func (r *PGNotificationRepository) DeleteCommentNotification(ctx context.Context, commentID uuid.UUID) (int64, error) {
+	query := `
+		DELETE FROM notifications
+		WHERE comment_id = $1
+	`
+	result, err := r.db.Exec(ctx, query, commentID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete notifications by comment_id: %w", err)
+	}
+	return result.RowsAffected(), nil
+}
+
+func (r *PGNotificationRepository) DeleteReactionNotification(ctx context.Context, postID uuid.UUID, actorID uuid.UUID) (int64, error) {
+	query := `
+		DELETE FROM notifications
+		WHERE post_id = $1 AND actor_id = $2 AND type = 'REACTION_ADDED'
+	`
+	result, err := r.db.Exec(ctx, query, postID, actorID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete notifications by post_id and actor_id: %w", err)
+	}
+	return result.RowsAffected(), nil
+}

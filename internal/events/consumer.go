@@ -107,11 +107,27 @@ func (c *Consumer) handleMessage(ctx context.Context, d amqp.Delivery) {
 	}
 
 	var svcError error
+	var deletedCount int64
+
 	switch event.Type {
 	case EventCommentCreated:
+		if commentID == nil {
+			log.Printf("comment_id is required for COMMENT_CREATED events")
+			_ = d.Nack(false, false)
+			return
+		}
 		_, svcError = c.service.CreateCommentNotification(ctx, userID, actorID, postID, commentID, event.Message)
 	case EventReactionAdded:
 		_, svcError = c.service.CreateReactionNotification(ctx, userID, actorID, postID, event.Message)
+	case EventCommentDeleted:
+		if commentID == nil {
+			log.Printf("comment_id is required for COMMENT_DELETED events")
+			_ = d.Nack(false, false)
+			return
+		}
+		deletedCount, svcError = c.service.DeleteCommentNotification(ctx, *commentID)
+	case EventReactionRemoved:
+		deletedCount, svcError = c.service.DeleteReactionNotifications(ctx, postID, actorID)
 	default:
 		log.Printf("no handler for event type: %s", event.Type)
 		_ = d.Ack(false)
@@ -130,7 +146,12 @@ func (c *Consumer) handleMessage(ctx context.Context, d amqp.Delivery) {
 	}
 
 	_ = d.Ack(false)
-	log.Printf("notification created for user %s (type: %s)", event.UserID, event.Type)
+
+	if event.Type == EventCommentDeleted || event.Type == EventReactionRemoved {
+		log.Printf("deleted %d notification(s) for user %s (event: %s)", deletedCount, event.UserID, event.Type)
+	} else {
+		log.Printf("notification created for user %s (event: %s)", event.UserID, event.Type)
+	}
 }
 
 func (c *Consumer) Close() {
