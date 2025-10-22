@@ -22,11 +22,11 @@ func NewRouter(notificationService *services.NotificationService, jwtSecret stri
 	r.Use(chiMiddleware.Timeout(60 * time.Second))
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
@@ -38,6 +38,7 @@ func NewRouter(notificationService *services.NotificationService, jwtSecret stri
 		r.Use(middleware.JWTAuth(jwtSecret))
 
 		r.Get("/notifications", notificationHandler.ListNotifications)
+		r.Put("/notifications/read-all", notificationHandler.MarkAllAsRead)
 		r.Put("/notifications/{id}/read", notificationHandler.MarkAsRead)
 	})
 

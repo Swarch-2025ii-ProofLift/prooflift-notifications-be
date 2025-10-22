@@ -97,6 +97,25 @@ func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request)
 	responses.RespondSuccess(w, http.StatusOK, map[string]string{"message": "notification marked as read"})
 }
 
+func (h *NotificationHandler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		responses.RespondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	count, err := h.service.MarkAllAsRead(r.Context(), userID)
+	if err != nil {
+		responses.RespondError(w, http.StatusInternalServerError, "failed to mark all notifications as read")
+		return
+	}
+
+	responses.RespondSuccess(w, http.StatusOK, map[string]interface{}{
+		"message": "all notifications marked as read",
+		"count":   count,
+	})
+}
+
 func (h *NotificationHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	responses.RespondSuccess(w, http.StatusOK, map[string]string{
 		"status":  "healthy",

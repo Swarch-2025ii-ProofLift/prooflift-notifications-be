@@ -113,3 +113,15 @@ func (s *NotificationService) DeleteReactionNotifications(ctx context.Context, p
 	}
 	return count, nil
 }
+
+func (s *NotificationService) MarkAllAsRead(ctx context.Context, userID uuid.UUID) (int64, error) {
+	if userID == uuid.Nil {
+		return 0, configs.NewValidationError("userID cannot be nil")
+	}
+
+	count, err := s.repo.MarkAllAsReadByUser(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to mark all notifications as read: %w", err)
+	}
+	return count, nil
+}

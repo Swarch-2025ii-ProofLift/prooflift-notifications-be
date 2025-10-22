@@ -140,6 +140,19 @@ func (r *PGNotificationRepository) MarkAsRead(ctx context.Context, notificationI
 	return nil
 }
 
+func (r *PGNotificationRepository) MarkAllAsReadByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	query := `
+		UPDATE notifications
+		SET is_read = TRUE, read_at = $1
+		WHERE user_id = $2 AND is_read = FALSE
+	`
+	result, err := r.db.Exec(ctx, query, time.Now(), userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to mark all notifications as read: %w", err)
+	}
+	return result.RowsAffected(), nil
+}
+
 func (r *PGNotificationRepository) DeleteCommentNotification(ctx context.Context, commentID uuid.UUID) (int64, error) {
 	query := `
 		DELETE FROM notifications
