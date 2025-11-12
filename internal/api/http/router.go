@@ -34,7 +34,7 @@ func NewRouter(notificationService *services.NotificationService, jwtSecret stri
 
 	r.Get("/health", notificationHandler.HealthCheck)
 
-	r.Route("/api", func(r chi.Router) {
+	r.Group(func(r chi.Router) {
 		r.Use(middleware.JWTAuth(jwtSecret))
 
 		r.Get("/notifications", notificationHandler.ListNotifications)
